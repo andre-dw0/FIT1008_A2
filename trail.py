@@ -72,13 +72,13 @@ class Trail:
 
     def add_mountain_before(self, mountain: Mountain) -> Trail:
         """Adds a mountain before everything currently in the trail."""
-        if self.store == None:
+        if self.store is None:
             return Trail(TrailSeries(mountain, Trail(None)))
         return Trail(self.store.add_mountain_before(mountain))
 
     def add_empty_branch_before(self) -> Trail:
         """Adds an empty branch before everything currently in the trail."""
-        if self.store == None:
+        if self.store is None:
             return Trail(TrailSplit(Trail(None), Trail(None), Trail(None)))
         return Trail(self.store.add_empty_branch_before())
 
