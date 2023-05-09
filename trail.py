@@ -85,10 +85,9 @@ class Trail:
     def follow_path(self, personality: WalkerPersonality) -> None:
         """Follow a path and add mountains according to a personality."""
         current = self
-        flag = True
         linked_stack = LinkedStack()
 
-        while flag:
+        while True:
             if current.store is None:
                 if linked_stack.is_empty():
                     return
@@ -102,10 +101,7 @@ class Trail:
                     linked_stack.push(current.store.path_follow)
                     branch = personality.select_branch(
                         current.store.path_top, current.store.path_bottom)
-                    if branch == True:
-                        current = current.store.path_top
-                    else:
-                        current = current.store.path_bottom
+                    current = current.store.path_top if branch == True else current.store.path_bottom
 
     def collect_all_mountains(self) -> list[Mountain]:
         """Returns a list of all mountains on the trail."""
