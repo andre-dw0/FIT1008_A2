@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
+from data_structures.linked_stack import LinkedStack
 from mountain import Mountain
 
 from typing import TYPE_CHECKING, Union
@@ -37,7 +38,6 @@ class TrailSeries:
     --mountain--following--
 
     """
-
     mountain: Mountain
     following: Trail
 
@@ -51,15 +51,15 @@ class TrailSeries:
 
     def add_empty_branch_before(self) -> TrailStore:
         """Adds an empty branch, where the current trailstore is now the following path."""
-        return TrailSplit(Trail(None), Trail(None), self)
+        return TrailSplit(Trail(None), Trail(None), Trail(self))
 
     def add_mountain_after(self, mountain: Mountain) -> TrailStore:
         """Adds a mountain after the current mountain, but before the following trail."""
-        return TrailSeries(self.mountain, TrailSeries(mountain, self.trail))
+        return TrailSeries(self.mountain, Trail(TrailSeries(mountain, self.following)))
 
     def add_empty_branch_after(self) -> TrailStore:
         """Adds an empty branch after the current mountain, but before the following trail."""
-        return TrailSeries(self.mountain, TrailSplit(Trail(None), Trail(None), self.trail))
+        return TrailSeries(self.mountain, Trail(TrailSplit(Trail(None), Trail(None), self.following)))
 
 
 TrailStore = Union[TrailSplit, TrailSeries, None]
@@ -84,7 +84,24 @@ class Trail:
 
     def follow_path(self, personality: WalkerPersonality) -> None:
         """Follow a path and add mountains according to a personality."""
-        raise NotImplementedError()
+        current = self
+        flag = True
+        linked_stack = LinkedStack()
+        while flag:
+            if current is None:
+                if linked_stack.is_empty():
+                    return
+                else:
+                    current = linked_stack.pop()
+            else:
+                if isinstance(current.store, TrailSeries):
+                    personality.add_mountain(current.store.mountain)
+                    current = current.store.following
+                else:
+                    linked_stack.push(current.store.path_follow)
+                    branch = personality.select_branch(
+                        current.store.path_top, current.store.path_bottom)
+                    current = branch
 
     def collect_all_mountains(self) -> list[Mountain]:
         """Returns a list of all mountains on the trail."""
