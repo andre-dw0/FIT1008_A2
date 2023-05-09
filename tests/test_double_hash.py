@@ -3,6 +3,7 @@ from ed_utils.decorators import number
 
 from double_key_table import DoubleKeyTable
 
+
 class TestDoubleHash(unittest.TestCase):
 
     @number("3.1")
@@ -21,13 +22,15 @@ class TestDoubleHash(unittest.TestCase):
         dt["Ivy", "Jen"] = 4
         dt["May", "Tom"] = 5
         dt["Tim", "Bob"] = 6
-        self.assertRaises(KeyError, lambda: dt._linear_probe("May", "Jim", False))
+        self.assertRaises(
+            KeyError, lambda: dt._linear_probe("May", "Jim", False))
         self.assertEqual(dt._linear_probe("May", "Jim", True), (6, 1))
-        dt["May", "Jim"] = 7 # Linear probing on internal table
+        dt["May", "Jim"] = 7  # Linear probing on internal table
         self.assertEqual(dt._linear_probe("May", "Jim", False), (6, 1))
-        self.assertRaises(KeyError, lambda: dt._linear_probe("Het", "Liz", False))
+        self.assertRaises(
+            KeyError, lambda: dt._linear_probe("Het", "Liz", False))
         self.assertEqual(dt._linear_probe("Het", "Liz", True), (2, 2))
-        dt["Het", "Liz"] = 8 # Linear probing on external table
+        dt["Het", "Liz"] = 8  # Linear probing on external table
         self.assertEqual(dt._linear_probe("Het", "Liz", False), (2, 2))
 
     @number("3.2")
@@ -51,7 +54,8 @@ class TestDoubleHash(unittest.TestCase):
         dt["Het", "Bob"] = 4
         self.assertEqual(dt._linear_probe("Het", "Bob", False), (0, 3))
 
-        self.assertRaises(KeyError, lambda: dt._linear_probe("Tim", "Jen", False))
+        self.assertRaises(
+            KeyError, lambda: dt._linear_probe("Tim", "Jen", False))
         dt["Tim", "Kat"] = 5
         self.assertEqual(dt._linear_probe("Tim", "Kat", False), (1, 1))
 
