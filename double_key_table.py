@@ -39,6 +39,7 @@ class DoubleKeyTable(Generic[K1, K2, V]):
             self.internal_sizes = internal_sizes
         else:
             self.internal_sizes = self.TABLE_SIZES
+        self.count = 0
 
     def hash1(self, key: K1) -> int:
         """
@@ -73,15 +74,57 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         :raises KeyError: When the key pair is not in the table, but is_insert is False.
         :raises FullError: When a table is full and cannot be inserted.
         """
-        position = self.table._linear_probe(
-            key1, is_insert)  # hash value of the location which key1 maps to in outer list
-        if self.table.array[position] is None:
-            # creates a new hash table at the location if none exist
-            self.table.array[position] = LinearProbeTable(self.internal_sizes)
-            self.table.array[position].hash = lambda k: self.hash2(
-                k, self.table.array[position])  # assigns the correct hash function to the inner hash table we've just made
-        # returns a tuple containing the locations which our linear probe found as suitable given our two keys
-        return (position, self.table.array[position]._linear_probe(key2, is_insert))
+        position1 = self.hash1(key1)
+        pos1, pos2 = False, False
+
+        for _ in range(self.table.table_size):
+            if self.table.array[position1] is None:
+                # Empty spot. Am I upserting or retrieving?
+                if is_insert:
+                    self.table.array[position1] = (
+                        key1, LinearProbeTable(self.internal_sizes))
+                    self.table.array[position1][1].hash = lambda k: self.hash2(
+                        k, self.table.array[position1][1])
+                    pos1 = True
+                    break
+                else:
+                    raise KeyError("Key 1:", key1)
+            elif self.table.array[position1][0] == key1:
+                pos1 = True
+                break
+            else:
+                # Taken by something else. Time to linear probe.
+                position1 = (position1 + 1) % self.table_size
+
+        if pos1 == False:
+            if is_insert:
+                raise FullError("Table is full!")
+            else:
+                raise KeyError("Key 1", key1)
+
+        inner_table = self.table.array[position1][1]
+        position2 = self.hash2(key2, inner_table)
+
+        for _ in range(inner_table.table_size):
+            if inner_table.array[position2] is None:
+                if is_insert:
+                    pos2 = True
+                    break
+                else:
+                    raise KeyError("Key 2:", key2)
+            elif inner_table.array[position2][0] == key2:
+                pos2 = True
+                break
+            else:
+                position2 = (position2 + 1) % inner_table.table_size
+
+        if pos2 == False:
+            if is_insert:
+                raise FullError("Table is full!")
+            else:
+                raise KeyError("Key 1:", key2)
+
+        return (position1, position2)
 
     def iter_keys(self, key: K1 | None = None) -> Iterator[K1 | K2]:
         """
@@ -117,7 +160,11 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         key = x: returns all values for top-level key x.
         """
         if key is None:
-            return self.table.values()
+            values = set()
+            for key in self.keys():
+                for item in self.table[key].values():
+                    values.add(item)
+            return list(values)
         else:
             return self.table[key].values()
 
@@ -141,16 +188,18 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         :raises KeyError: when the key doesn't exist.
         """
         position = self._linear_probe(key[0], key[1], False)
-        return self.table.array[position[0]].array[position[1]][1]
+        return self.table.array[position[0]][1].array[position[1]][1]
 
     def __setitem__(self, key: tuple[K1, K2], data: V) -> None:
         """
         Set an (key, value) pair in our hash table.
         """
         position = self._linear_probe(key[0], key[1], True)
-        inner_table = self.table.array[position[0]]
+        inner_table = self.table.array[position[0]][1]
 
-        inner_table.array[position[1]] = (key, data)
+        if inner_table.array[position[1]] is None:
+            self.count += 1
+        inner_table.array[position[1]] = (key[1], data)
         if len(inner_table) > inner_table.table_size / 2:
             inner_table._rehash()
 
@@ -183,7 +232,7 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         """
         Returns number of elements in the hash table
         """
-        raise NotImplementedError()
+        return self.count
 
     def __str__(self) -> str:
         """
@@ -196,5 +245,23 @@ class DoubleKeyTable(Generic[K1, K2, V]):
 
 if __name__ == "__main__":
     dt = DoubleKeyTable()
-    dt["May", "Jim"] = 1
+
+    dt["Tim", "Jen"] = 1
+    dt["Amy", "Ben"] = 2
+    dt["May", "Ben"] = 3
+    dt["Ivy", "Jen"] = 4
+    dt["May", "Tom"] = 5
+    dt["Tim", "Bob"] = 6
+    dt["May", "Jim"] = 7
+    dt["Het", "Liz"] = 8
+
+    print(dt["May", "Ben"])
+    print(dt["May", "Tom"])
     print(dt["May", "Jim"])
+    print(dt["May", "Tom"])
+
+    print(dt.keys("May"))
+
+    print(dt.values())
+
+    print(dt.values("Tim"))

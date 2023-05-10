@@ -13,6 +13,7 @@ from data_structures.referential_array import ArrayR
 K = TypeVar('K')
 V = TypeVar('V')
 
+
 class FullError(Exception):
     pass
 
@@ -30,7 +31,8 @@ class LinearProbeTable(Generic[K, V]):
     """
 
     # No test case should exceed 1 million entries.
-    TABLE_SIZES = [5, 13, 29, 53, 97, 193, 389, 769, 1543, 3079, 6151, 12289, 24593, 49157, 98317, 196613, 393241, 786433, 1572869]
+    TABLE_SIZES = [5, 13, 29, 53, 97, 193, 389, 769, 1543, 3079, 6151,
+                   12289, 24593, 49157, 98317, 196613, 393241, 786433, 1572869]
 
     HASH_BASE = 31
 
@@ -41,7 +43,8 @@ class LinearProbeTable(Generic[K, V]):
         if sizes is not None:
             self.TABLE_SIZES = sizes
         self.size_index = 0
-        self.array:ArrayR[tuple[K, V]] = ArrayR(self.TABLE_SIZES[self.size_index])
+        self.array: ArrayR[tuple[K, V]] = ArrayR(
+            self.TABLE_SIZES[self.size_index])
         self.count = 0
 
     def hash(self, key: K) -> int:
