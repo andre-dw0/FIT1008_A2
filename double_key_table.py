@@ -72,9 +72,7 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         :raises FullError: When a table is full and cannot be inserted.
         """
         position1 = self.hash1(key1)
-
-        flag = False
-        for _ in range(self.table_size):
+        for i in range(self.table_size):
             if self.array[position1] is None:
                 if is_insert:
                     self.array[position1] = (
@@ -82,20 +80,13 @@ class DoubleKeyTable(Generic[K1, K2, V]):
                     self.array[position1][1].hash = lambda k: self.hash2(
                         k, self.array[position1][1])
                     self.table_count += 1
-                    flag = True
-                    break
+                    return (position1, self.array[position1][1]._linear_probe(key2, is_insert))
                 else:
                     raise KeyError(key1)
             elif self.array[position1][0] == key1:
-                flag = True
-                break
-            else:
-                position1 = (position1 + 1) % self.table_size
-        if flag == False:
-            raise FullError("Table is full!")
-
-        inner_table = self.array[position1][1]
-        return (position1, inner_table._linear_probe(key2, is_insert))
+                return (position1, self.array[position1][1]._linear_probe(key2, is_insert))
+            position1 = (position1 + 1) % self.table_size
+        raise FullError("Table is full!")
 
     def iter_keys(self, key: K1 | None = None) -> Iterator[K1 | K2]:
         """
@@ -105,10 +96,8 @@ class DoubleKeyTable(Generic[K1, K2, V]):
             Returns an iterator of all keys in the bottom-hash-table for k.
         """
         if key is not None:
-            for item in self.array:
-                if item is not None and item[0] == key:
-                    for pair in item[0].array:
-                        yield pair[0]
+            inner_table = self.get_inner_table(key)
+            yield from inner_table.keys()
         else:
             for item in self.array:
                 if item is not None:
@@ -121,10 +110,10 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         """
         if key is None:
             return [item[0] for item in self.array if item is not None]
-        else:
-            for i in range(len(self.array)):
-                if self.array[i] is not None and self.array[i][0] == key:
-                    return self.array[i][1].keys()
+
+        for item in self.array:
+            if item is not None and item[0] == key:
+                return item[1].keys()
 
     def iter_values(self, key: K1 | None = None) -> Iterator[V]:
         """
@@ -135,17 +124,12 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         """
         if key is not None:
             for item in self.array:
-                if item is not None:
-                    if item[0] == key:
-                        for pair in item[1].array:
-                            if pair is not None:
-                                yield pair[1]
+                if item and item[0] == key:
+                    yield from (pair[1] for pair in item[1].array if pair)
         else:
             for item in self.array:
-                if item is not None:
-                    for pair in item[1].array:
-                        if pair is not None:
-                            yield pair[1]
+                if item:
+                    yield from (pair[1] for pair in item[1].array if pair)
 
     def values(self, key: K1 | None = None) -> list[V]:
         """
@@ -153,17 +137,11 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         key = x: returns all values for top-level key x.
         """
         if key is None:
-            values = []
-            for i in range(self.table_size):
-                if self.array[i] is not None:
-                    for value in self.array[i][1].values():
-                        values.append(value)
-            return values
+            return [value for item in self.array if item is not None for value in item[1].values()]
         else:
-            for i in range(self.table_size):
-                if self.array[i] is not None:
-                    if self.array[i][0] == key:
-                        return self.array[i][1].values()
+            for item in self.array:
+                if item is not None and item[0] == key:
+                    return item[1].values()
 
     def __contains__(self, key: tuple[K1, K2]) -> bool:
         """
@@ -213,14 +191,14 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         self.count -= 1
 
         if self.array[positions[0]][1].is_empty():
-            self.array[positions[0]] = None
             self.table_count -= 1
-            # Start moving over the cluster
+            self.array[positions[0]] = None
             position = (positions[0] + 1) % self.table_size
-            while self.array[position] is not None:
+            while self.array[position]:
                 key2, value = self.array[position]
                 self.array[position] = None
-                newpos = self._linear_probe(key2, 'sd', True)
+                # I know its a rough solution but couldn't figure out a compact way to do it otherwise
+                newpos = self._linear_probe(key2, key[1], True)
                 self.array[newpos[0]] = (key2, value)
                 position = (position + 1) % self.table_size
 
@@ -260,34 +238,11 @@ class DoubleKeyTable(Generic[K1, K2, V]):
 
         Not required but may be a good testing tool.
         """
-        raise NotImplementedError()
+        items = []
+        for i in range(len(self.array)):
+            if self.array[i] is None:
+                items.append(" -- EMPTY -- \n")
+            else:
+                items.append(f"{i} ~ {self.array[i][0]}: {self.array[i][1]}")
 
-
-if __name__ == "__main__":
-    dt = DoubleKeyTable()
-    dt["May", "Jim"] = 1
-    dt["Kim", "Tim"] = 2
-
-    key_iterator = dt.iter_keys()
-    value_iterator = dt.iter_values()
-
-    key = next(key_iterator)
-    print(key)
-    # self.assertIn(key, ["May", "Kim"])
-    value = next(value_iterator)
-    print(value)
-    # self.assertIn(value, [1, 2])
-
-    del dt["May", "Jim"]
-    del dt["Kim", "Tim"]
-
-    key2 = next(key_iterator)
-    print(key2)
-
-    # Retrieving the next value should either raise StopIteration or crash entirely.
-    # Note: Deleting from an element being iterated over is bad practice
-    # We just want to make sure you aren't returning a list and are doing this
-    # with an iterator.
-    # self.assertRaises(BaseException, lambda: next(key_iterator))
-    # self.assertRaises(BaseException, lambda: next(value_iterator))
-    pass
+        return "START\n" + "".join(items) + "END"
