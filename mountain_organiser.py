@@ -1,14 +1,34 @@
 from __future__ import annotations
-
+from typing import List
 from mountain import Mountain
+from double_key_table import DoubleKeyTable
+
 
 class MountainOrganiser:
+    def __init__(self):
+        self.mountains = []
+        self.hash_table = DoubleKeyTable()
 
-    def __init__(self) -> None:
-        raise NotImplementedError()
+    def add_mountains(self, mountains: List[Mountain]) -> None:
+        for mountain in mountains:
+            self.mountains.append(mountain)
+            self.hash_table[(str(mountain.length), mountain.name)] = mountain
 
     def cur_position(self, mountain: Mountain) -> int:
-        raise NotImplementedError()
+        if mountain in self.mountains:
+            length = mountain.length
+            name = mountain.name
+            count = 0
+            for m in self.mountains:
+                if m.length < length:
+                    count += 1
+                elif m.length == length and m.name < name:
+                    count += 1
+            return count
+        else:
+            raise KeyError("Mountain not found in the organiser.")
 
-    def add_mountains(self, mountains: list[Mountain]) -> None:
-        raise NotImplementedError()
+
+if __name__ == "__main__":
+
+    pass
