@@ -155,7 +155,6 @@ class LinearProbeTable(Generic[K, V]):
         :complexity: See linear probe.
         :raises FullError: when the table cannot be resized further.
         """
-
         position = self._linear_probe(key, True)
 
         if self.array[position] is None:
