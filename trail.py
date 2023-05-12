@@ -134,9 +134,10 @@ class Trail:
                     current = current.store.path_top if branch == True else current.store.path_bottom
 
     def collect_all_mountains(self) -> list[Mountain]:
-        """Returns a list of all mountains on the trail.
+        """
+        Returns a list of all mountains on the trail.
 
-
+        The complexity of this function is O(n).
         """
         raise NotImplementedError()
 
@@ -147,7 +148,5 @@ class Trail:
         Paths are represented as lists of mountains.
 
         Paths are unique if they take a different branch, even if this results in the same set of mountains.
-
-
         """
         raise NotImplementedError()
