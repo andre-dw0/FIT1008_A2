@@ -152,8 +152,3 @@ class InfiniteHashTable(Generic[K, V]):
             return False
         else:
             return True
-
-
-if __name__ == "__main__":
-
-    pass
