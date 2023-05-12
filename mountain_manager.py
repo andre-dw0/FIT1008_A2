@@ -1,15 +1,19 @@
 from mountain import Mountain
 
+
 class MountainManager:
 
     def __init__(self) -> None:
-        pass
+        self.mountains = []
 
     def add_mountain(self, mountain: Mountain):
-        raise NotImplementedError()
+        if mountain in self.mountains:
+            self.mountains.append(mountain)
+        else:
+            raise KeyError(Mountain)
 
     def remove_mountain(self, mountain: Mountain):
-        raise NotImplementedError()
+        self.mountains.remove(mountain)
 
     def edit_mountain(self, old: Mountain, new: Mountain):
         raise NotImplementedError()

@@ -7,12 +7,10 @@ from double_key_table import DoubleKeyTable
 class MountainOrganiser:
     def __init__(self):
         self.mountains = []
-        self.hash_table = DoubleKeyTable()
 
     def add_mountains(self, mountains: List[Mountain]) -> None:
         for mountain in mountains:
             self.mountains.append(mountain)
-            self.hash_table[(str(mountain.length), mountain.name)] = mountain
 
     def cur_position(self, mountain: Mountain) -> int:
         if mountain in self.mountains:
@@ -26,7 +24,7 @@ class MountainOrganiser:
                     count += 1
             return count
         else:
-            raise KeyError("Mountain not found in the organiser.")
+            raise KeyError(mountain)
 
 
 if __name__ == "__main__":

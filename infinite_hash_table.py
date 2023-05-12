@@ -42,7 +42,10 @@ class InfiniteHashTable(Generic[K, V]):
             if isinstance(self.array[position], InfiniteHashTable):
                 return self.array[position][key]
             else:
-                return self.array[position]
+                if self.array[position][0] == key:
+                    return self.array[position][1]
+                else:
+                    raise KeyError(key)
 
     def __setitem__(self, key: K, value: V) -> None:
         """
@@ -75,16 +78,14 @@ class InfiniteHashTable(Generic[K, V]):
             if not isinstance(self.array[position][1], InfiniteHashTable):
                 self.array[position] = None
             else:
-                if len(self.array[position][1]) == 2:
+                del self.array[position][1][key]
+                if len(self.array[position][1]) == 1:
                     for item in self.array[position][1].array:
                         if item is not None and item[0] != key:
                             new_key, new_value = item
                             break
-                    del self.array[position][1][key]
-                    del self.array[position][1][new_key]
+                    self.array[position] = None
                     self[new_key] = new_value
-                else:
-                    del self.array[position][1][key]
         else:
             raise KeyError(key)
 
@@ -123,12 +124,21 @@ class InfiniteHashTable(Generic[K, V]):
 
         :raises KeyError: when the key doesn't exist.
         """
+        positions = []
         position = self.hash(key)
-        if self.array[position] is None:
-            raise KeyError(key)
-        if isinstance(self.array[position][1], InfiniteHashTable):
-            return [position] + self.array[position][1].get_location(key)
-        return [position]
+        current = self.array[position]
+
+        while current is not None:
+            if isinstance(current[1], InfiniteHashTable):
+                positions.append(position)
+                position = current[1].hash(key)
+                current = current[1].array[position]
+            elif current[0] == key:
+                positions.append(position)
+                return positions
+            else:
+                raise KeyError(key)
+        raise KeyError(key)
 
     def __contains__(self, key: K) -> bool:
         """
@@ -145,40 +155,5 @@ class InfiniteHashTable(Generic[K, V]):
 
 
 if __name__ == "__main__":
-    ih = InfiniteHashTable()
-    ih["lin"] = 1
-    ih["leg"] = 2
-    ih["mine"] = 3
-    ih["linked"] = 4
-    ih["limp"] = 5
-    ih["mining"] = 6
-    ih["jake"] = 7
-    ih["linger"] = 8
 
-    # del ih["limp"]
-    # print(ih.get_location("linked"))
-    # Should do nothing
-    # self.assertEqual(ih.get_location("linked"), [4, 1, 6, 3])
-
-    print(ih)
-    del ih["mine"]
-    # print(ih)
-    print(ih.get_location("mining"))
-    # self.assertEqual(ih.get_location("mining"), [5])
-    # self.assertRaises(KeyError, lambda: ih.get_location("mine"))
-
-    del ih["mining"]
-    del ih["jake"]
-    del ih["leg"]
-    del ih["linger"]
-    del ih["linked"]
-
-    # self.assertEqual(ih["lin"], 1)
-    # self.assertEqual(ih.get_location("lin"), [4])
-
-    del ih["lin"]
-
-    ih["lin"] = 10
-    # self.assertEqual(ih.get_location("lin"), [4])
-    # self.assertEqual(len(ih), 1)
     pass
