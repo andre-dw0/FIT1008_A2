@@ -70,6 +70,14 @@ class DoubleKeyTable(Generic[K1, K2, V]):
 
         :raises KeyError: When the key pair is not in the table, but is_insert is False.
         :raises FullError: When a table is full and cannot be inserted.
+
+        The best case complexity is actually O(1) if the key is already in the table and
+        we follow a flow through the linear probe function that will return a value right
+        after checking this. An example is if we're trying to insert a value but it's already
+        in the table. The worst case complexity is O(n) where n is table_size, this occurs when perhaps
+        the table is relatively full and we have to search for an empty address during an insertion
+        operation. Since a search for a free address could take close to n number of searches,
+        the worst case complexity is O(n) where n is the table_size.  
         """
         position1 = self.hash1(key1)
         for i in range(self.table_size):
@@ -94,6 +102,9 @@ class DoubleKeyTable(Generic[K1, K2, V]):
             Returns an iterator of all top-level keys in hash table
         key = k:
             Returns an iterator of all keys in the bottom-hash-table for k.
+
+        The best case complexity is when the hash table is empty O(1),
+        otherwise, it will be O(n) where n is the length of the table.
         """
         if key is not None:
             inner_table = self.get_inner_table(key)
@@ -107,6 +118,9 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         """
         key = None: returns all top-level keys in the table.
         key = x: returns all bottom-level keys for top-level key x.
+
+        The best case complexity is when the hash table is empty O(1),
+        otherwise, it will be O(n) where n is the length of the table.
         """
         if key is None:
             return [item[0] for item in self.array if item is not None]
@@ -121,6 +135,9 @@ class DoubleKeyTable(Generic[K1, K2, V]):
             Returns an iterator of all values in hash table
         key = k:
             Returns an iterator of all values in the bottom-hash-table for k.
+
+        The best case complexity is when the hash table is empty O(1),
+        otherwise, it will be O(n) where n is the length of the table.
         """
         if key is not None:
             for item in self.array:
@@ -135,6 +152,9 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         """
         key = None: returns all values in the table.
         key = x: returns all values for top-level key x.
+
+        The best case complexity is when the hash table is empty O(1),
+        otherwise, it will be O(n) where n is the length of the table.
         """
         if key is None:
             return [value for item in self.array if item is not None for value in item[1].values()]
@@ -142,6 +162,7 @@ class DoubleKeyTable(Generic[K1, K2, V]):
             for item in self.array:
                 if item is not None and item[0] == key:
                     return item[1].values()
+            return []
 
     def __contains__(self, key: tuple[K1, K2]) -> bool:
         """
@@ -161,6 +182,10 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         Get the value at a certain key
 
         :raises KeyError: when the key doesn't exist.
+
+        The worst complexity can be O(n) (see linear probe) with respect to the
+        size of the table (if probe chain is close to table size for example). Best
+        case is O(1) if item is attained straight away at location it's key maps to.
         """
         positions = self._linear_probe(key[0], key[1], False)
         return self.array[positions[0]][1].array[positions[1]][1]
@@ -168,6 +193,11 @@ class DoubleKeyTable(Generic[K1, K2, V]):
     def __setitem__(self, key: tuple[K1, K2], data: V) -> None:
         """
         Set an (key, value) pair in our hash table.
+
+        Just like getitem magic method. The best case complexity for
+        set item is O(n), since we might have to search through the entire
+        array because of a long probe chain close to the size of the array.
+        Otherwise, O(1) is the best case time complexity when key maps without collision.
         """
         positions = self._linear_probe(key[0], key[1], True)
         inner_table = self.array[positions[0]][1]
@@ -184,6 +214,11 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         Deletes a (key, value) pair in our hash table.
 
         :raises KeyError: when the key doesn't exist.
+
+        Best case complexity is O(1) if we can delete an item and not
+        have to worry about rehashing anythign. Otherwise, the
+        worst case time complexity is O(n), since in the worst case, we
+        might have to rehash everything in the table.
         """
         positions = self._linear_probe(key[0], key[1], False)
         # Remove the element
@@ -237,6 +272,8 @@ class DoubleKeyTable(Generic[K1, K2, V]):
         String representation.
 
         Not required but may be a good testing tool.
+
+        Best and worst case time complexity is O(n) where n is the size of the array.
         """
         items = []
         for i in range(len(self.array)):

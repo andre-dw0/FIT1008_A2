@@ -3,7 +3,8 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
-def merge(l1: list[T], l2: list[T], key=lambda x:x) -> list[T]:
+
+def merge(l1: list[T], l2: list[T], key=lambda x: x) -> list[T]:
     """
     Merges two sorted lists into one larger sorted list,
     containing all elements from the smaller lists.
@@ -27,6 +28,7 @@ def merge(l1: list[T], l2: list[T], key=lambda x:x) -> list[T]:
     new_list += l1[cur_left:]
     new_list += l2[cur_right:]
     return new_list
+
 
 def mergesort(l: list[T]) -> list[T]:
     """

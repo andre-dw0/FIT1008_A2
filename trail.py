@@ -26,7 +26,10 @@ class TrailSplit:
     path_follow: Trail
 
     def remove_branch(self) -> TrailStore:
-        """Removes the branch, should just leave the remaining following trail."""
+        """Removes the branch, should just leave the remaining following trail.
+
+        The best and worst case complexity for this function is O(1)
+        """
         return self.path_follow.store
 
 
@@ -42,23 +45,38 @@ class TrailSeries:
     following: Trail
 
     def remove_mountain(self) -> TrailStore:
-        """Removes the mountain at the beginning of this series."""
+        """Removes the mountain at the beginning of this series.
+
+        The best and worst case time complexity of this function is O(1)
+        """
         return self.following.store
 
     def add_mountain_before(self, mountain: Mountain) -> TrailStore:
-        """Adds a mountain in series before the current one."""
+        """Adds a mountain in series before the current one.
+
+        The best and worst case time complexity of this function is O(1)
+        """
         return TrailSeries(mountain, Trail(self))
 
     def add_empty_branch_before(self) -> TrailStore:
-        """Adds an empty branch, where the current trailstore is now the following path."""
+        """Adds an empty branch, where the current trailstore is now the following path.
+
+        The best and worst case time complexity of this function is O(1)
+        """
         return TrailSplit(Trail(None), Trail(None), Trail(self))
 
     def add_mountain_after(self, mountain: Mountain) -> TrailStore:
-        """Adds a mountain after the current mountain, but before the following trail."""
+        """Adds a mountain after the current mountain, but before the following trail.
+
+        The best and worst case time complexity of this function is O(1)
+        """
         return TrailSeries(self.mountain, Trail(TrailSeries(mountain, self.following)))
 
     def add_empty_branch_after(self) -> TrailStore:
-        """Adds an empty branch after the current mountain, but before the following trail."""
+        """Adds an empty branch after the current mountain, but before the following trail.
+
+        The best and worst case time complexity of this function is O(1)
+        """
         return TrailSeries(self.mountain, Trail(TrailSplit(Trail(None), Trail(None), self.following)))
 
 
@@ -71,19 +89,31 @@ class Trail:
     store: TrailStore = None
 
     def add_mountain_before(self, mountain: Mountain) -> Trail:
-        """Adds a mountain before everything currently in the trail."""
+        """Adds a mountain before everything currently in the trail.
+
+        Best and Worst Complexity are O(1)
+        """
         if self.store is None:
             return Trail(TrailSeries(mountain, Trail(None)))
         return Trail(self.store.add_mountain_before(mountain))
 
     def add_empty_branch_before(self) -> Trail:
-        """Adds an empty branch before everything currently in the trail."""
+        """Adds an empty branch before everything currently in the trail.
+
+        Best and Worst Complexity are O(1)
+        """
         if self.store is None:
             return Trail(TrailSplit(Trail(None), Trail(None), Trail(None)))
         return Trail(self.store.add_empty_branch_before())
 
     def follow_path(self, personality: WalkerPersonality) -> None:
-        """Follow a path and add mountains according to a personality."""
+        """Follow a path and add mountains according to a personality.
+
+        The time complexity of follow_path really depends on the length of the
+        trail, if it's empty, that's the best case and the function retunrs
+        immediately, if not, it will traverse the entire trail. The worst case
+        complexity in this situation is O(n)
+        """
         current = self
         linked_stack = LinkedStack()
 
@@ -104,7 +134,10 @@ class Trail:
                     current = current.store.path_top if branch == True else current.store.path_bottom
 
     def collect_all_mountains(self) -> list[Mountain]:
-        """Returns a list of all mountains on the trail."""
+        """Returns a list of all mountains on the trail.
+
+
+        """
         raise NotImplementedError()
 
     # Input to this should not exceed k > 50, at most 5 branches.
@@ -114,5 +147,7 @@ class Trail:
         Paths are represented as lists of mountains.
 
         Paths are unique if they take a different branch, even if this results in the same set of mountains.
+
+
         """
         raise NotImplementedError()
