@@ -39,7 +39,7 @@ class InfiniteHashTable(Generic[K, V]):
         if self.array[position] is None:
             raise KeyError(key)
         else:
-            if self.array[position].isinstance(InfiniteHashTable):
+            if isinstance(self.array[position], InfiniteHashTable):
                 return self.array[position][key]
             else:
                 return self.array[position]
@@ -57,11 +57,12 @@ class InfiniteHashTable(Generic[K, V]):
                 new_table = InfiniteHashTable()
                 new_table.level = self.level + 1
                 old_key, old_value = self.array[position]
-                self.array[position] = (key[new_table.level-1], new_table)
-                self.array[position][1][key] = (key, value)
-                self.array[position][1][old_key] = (old_key, old_value)
+                self.array[position] = (
+                    key[:new_table.level], new_table)
+                self.array[position][1][key] = value
+                self.array[position][1][old_key] = old_value
         else:
-            self.array[position] = (key, value)
+            self.array[position] = key, value
 
     def __delitem__(self, key: K) -> None:
         """
@@ -71,12 +72,19 @@ class InfiniteHashTable(Generic[K, V]):
         """
         position = self.hash(key)
         if self.array[position] is not None:
-            if isinstance(self.array[position][1], InfiniteHashTable):
-                del self.array[position][1][key]
+            if not isinstance(self.array[position][1], InfiniteHashTable):
+                self.array[position] = None
             else:
-                del self.array[position]
-                if len(self.array) == 0:
-                    del self
+                if len(self.array[position][1]) == 2:
+                    for item in self.array[position][1].array:
+                        if item is not None and item[0] != key:
+                            new_key, new_value = item
+                            break
+                    del self.array[position][1][key]
+                    del self.array[position][1][new_key]
+                    self[new_key] = new_value
+                else:
+                    del self.array[position][1][key]
         else:
             raise KeyError(key)
 
@@ -96,7 +104,18 @@ class InfiniteHashTable(Generic[K, V]):
 
         Not required but may be a good testing tool.
         """
-        return str(self.table)
+        result = ""
+        for item in self.array:
+            if item is None:
+                continue
+            elif isinstance(item[1], InfiniteHashTable):
+                sub_table_str = str(item[1])
+                sub_table_str = "\n".join(
+                    ["  " + line for line in sub_table_str.split("\n")])
+                result += f"{item[0]}*\n{sub_table_str}\n"
+            else:
+                result += f"{item[0]}: {item[1]}\n"
+        return result.strip()
 
     def get_location(self, key):
         """
@@ -123,3 +142,43 @@ class InfiniteHashTable(Generic[K, V]):
             return False
         else:
             return True
+
+
+if __name__ == "__main__":
+    ih = InfiniteHashTable()
+    ih["lin"] = 1
+    ih["leg"] = 2
+    ih["mine"] = 3
+    ih["linked"] = 4
+    ih["limp"] = 5
+    ih["mining"] = 6
+    ih["jake"] = 7
+    ih["linger"] = 8
+
+    # del ih["limp"]
+    # print(ih.get_location("linked"))
+    # Should do nothing
+    # self.assertEqual(ih.get_location("linked"), [4, 1, 6, 3])
+
+    print(ih)
+    del ih["mine"]
+    # print(ih)
+    print(ih.get_location("mining"))
+    # self.assertEqual(ih.get_location("mining"), [5])
+    # self.assertRaises(KeyError, lambda: ih.get_location("mine"))
+
+    del ih["mining"]
+    del ih["jake"]
+    del ih["leg"]
+    del ih["linger"]
+    del ih["linked"]
+
+    # self.assertEqual(ih["lin"], 1)
+    # self.assertEqual(ih.get_location("lin"), [4])
+
+    del ih["lin"]
+
+    ih["lin"] = 10
+    # self.assertEqual(ih.get_location("lin"), [4])
+    # self.assertEqual(len(ih), 1)
+    pass
