@@ -69,10 +69,26 @@ class InfiniteHashTable(Generic[K, V]):
 
         :raises KeyError: when the key doesn't exist.
         """
-        raise NotImplementedError()
+        position = self.hash(key)
+        if self.array[position] is not None:
+            if isinstance(self.array[position][1], InfiniteHashTable):
+                del self.array[position][1][key]
+            else:
+                del self.array[position]
+                if len(self.array) == 0:
+                    del self
+        else:
+            raise KeyError(key)
 
     def __len__(self):
-        raise NotImplementedError()
+        count = 0
+        for item in self.array:
+            if item is not None:
+                if isinstance(item[1], InfiniteHashTable):
+                    count += len(item[1])
+                else:
+                    count += 1
+        return count
 
     def __str__(self) -> str:
         """
@@ -88,7 +104,12 @@ class InfiniteHashTable(Generic[K, V]):
 
         :raises KeyError: when the key doesn't exist.
         """
-        raise NotImplementedError()
+        position = self.hash(key)
+        if self.array[position] is None:
+            raise KeyError(key)
+        if isinstance(self.array[position][1], InfiniteHashTable):
+            return [position] + self.array[position][1].get_location(key)
+        return [position]
 
     def __contains__(self, key: K) -> bool:
         """
